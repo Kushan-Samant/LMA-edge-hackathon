@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.groq.com;">
+  <title>LoanAI - Instant Loan Approval</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+  <div class="app-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span>Powered by AI</span>
+        <h1>LoanAI</h1>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="#" class="nav-link active" data-view="dashboard" id="nav-dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-view="apply" id="nav-apply">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>Apply for Loan</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-view="history" id="nav-history">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12,6 12,12 16,14" />
+            </svg>
+            <span>History</span>
+          </a>
+        </li>
+      </ul>
+      <div class="nav-item" style="padding: 0 var(--space-6);">
+        <button class="btn btn-outline btn-sm" id="btn-restart-tutorial" style="width: 100%;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4M12 8h.01" />
+          </svg>
+          <span>Tutorial</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content" id="main-content">
+      <!-- Dashboard View -->
+      <div class="view" id="view-dashboard">
+        <div class="page-header">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">Overview of your loan applications</p>
+        </div>
+
+        <div class="stats-grid" id="stats-overview">
+          <div class="stat-card">
+            <div class="stat-label">Total Applications</div>
+            <div class="stat-value" id="stat-total">0</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-label">Approved</div>
+            <div class="stat-value" id="stat-approved">0</div>
+          </div>
+          <div class="stat-card error">
+            <div class="stat-label">Rejected</div>
+            <div class="stat-value" id="stat-rejected">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Value</div>
+            <div class="stat-value" id="stat-value">$0</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Recent Applications</h3>
+            <a href="#" class="btn btn-outline btn-sm" data-view="apply" id="btn-new-application">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              New Application
+            </a>
+          </div>
+          <div class="table-wrapper">
+            <table class="table" id="recent-applications-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Purpose</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recent-applications-body">
+                <tr>
+                  <td colspan="4" class="text-center text-gray" style="padding: var(--space-8);">
+                    No applications yet. Start by applying for a loan!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apply View -->
+      <div class="view hidden" id="view-apply">
+        <div class="page-header">
+          <h1 class="page-title">Apply for a Loan</h1>
+          <p class="page-subtitle">Complete the form below for instant AI-powered approval</p>
+        </div>
+
+        <form id="loan-form" class="grid-2">
+          <div class="card">
+            <h3 class="card-title mb-6">Personal Information</h3>
+
+            <div class="form-group">
+              <label class="form-label" for="fullName">Full Name</label>
+              <input type="text" class="form-input" id="fullName" placeholder="John Doe" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="email">Email Address</label>
+              <input type="email" class="form-input" id="email" placeholder="john@example.com" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="phone">Phone Number</label>
+              <input type="tel" class="form-input" id="phone" placeholder="(555) 123-4567" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="address">Street Address</label>
+              <input type="text" class="form-input" id="address" placeholder="123 Main Street" required>
+            </div>
+
+            <div class="grid-2" style="gap: var(--space-4);">
+              <div class="form-group">
+                <label class="form-label" for="city">City</label>
+                <input type="text" class="form-input" id="city" placeholder="New York" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="state">State</label>
+                <input type="text" class="form-input" id="state" placeholder="NY" maxlength="2" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="zipCode">ZIP Code</label>
+              <input type="text" class="form-input" id="zipCode" placeholder="10001" pattern="[0-9]{5}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="employer">Current Employer</label>
+              <input type="text" class="form-input" id="employer" placeholder="Company Name" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="employmentYears">Years at Current Job</label>
+              <input type="number" class="form-input" id="employmentYears" placeholder="2" min="0" step="0.5" required>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title mb-6">Financial & Loan Details</h3>
+
+            <div class="form-group">
+              <label class="form-label" for="monthlyIncome">Monthly Income ($)</label>
+              <input type="number" class="form-input" id="monthlyIncome" placeholder="5000" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="monthlyExpenses">Monthly Expenses ($)</label>
+              <input type="number" class="form-input" id="monthlyExpenses" placeholder="2000" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="existingDebt">Existing Debt ($)</label>
+              <input type="number" class="form-input" id="existingDebt" placeholder="0" min="0" value="0">
+              <span class="form-hint">Include credit cards, car loans, mortgages, etc.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="creditScore">Credit Score (300-850)</label>
+              <input type="number" class="form-input" id="creditScore" placeholder="720" min="300" max="850" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="loanAmount">Loan Amount Requested ($)</label>
+              <input type="number" class="form-input" id="loanAmount" placeholder="10000" min="1000" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="loanPurpose">Loan Purpose</label>
+              <select class="form-input" id="loanPurpose" required>
+                <option value="">Select purpose...</option>
+                <option value="home">Home Improvement</option>
+                <option value="car">Vehicle Purchase</option>
+                <option value="business">Business</option>
+                <option value="education">Education</option>
+                <option value="medical">Medical Expenses</option>
+                <option value="debt">Debt Consolidation</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="loanTerm">Loan Term (months)</label>
+              <select class="form-input" id="loanTerm" required>
+                <option value="12">12 months</option>
+                <option value="24">24 months</option>
+                <option value="36" selected>36 months</option>
+                <option value="48">48 months</option>
+                <option value="60">60 months</option>
+              </select>
+            </div>
+
+            <div class="form-group"
+              style="background: var(--color-gray-50); padding: var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--color-gray-200);">
+              <label class="form-label" for="signature">Digital Signature</label>
+              <input type="text" class="form-input" id="signature" placeholder="Type your full name as signature"
+                required>
+              <span class="form-hint">By typing your name, you confirm all information is accurate</span>
+            </div>
+
+            <div class="form-group">
+              <label class="flex items-center gap-2" style="cursor: pointer;">
+                <input type="checkbox" id="agreeTerms" required
+                  style="width: 18px; height: 18px; accent-color: var(--color-primary);">
+                <span class="text-sm">I agree to the terms and conditions and authorize a credit check</span>
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn"
+              style="width: 100%; margin-top: var(--space-4);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22,4 12,14.01 9,11.01" />
+              </svg>
+              Get Instant Decision
+            </button>
+          </div>
+        </form>
+
+        <!-- Decision Result (initially hidden) -->
+        <div id="decision-result" class="hidden"></div>
+      </div>
+
+      <!-- History View -->
+      <div class="view hidden" id="view-history">
+        <div class="page-header">
+          <h1 class="page-title">Application History</h1>
+          <p class="page-subtitle">View all your past loan applications</p>
+        </div>
+
+        <div class="card">
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Applicant</th>
+                  <th>Amount</th>
+                  <th>Purpose</th>
+                  <th>Term</th>
+                  <th>Status</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body">
+                <tr>
+                  <td colspan="7" class="text-center text-gray" style="padding: var(--space-8);">
+                    No application history yet.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Onboarding Overlay -->
+  <div class="onboarding-overlay" id="onboarding-overlay">
+    <div class="onboarding-spotlight" id="onboarding-spotlight"></div>
+    <div class="onboarding-tooltip" id="onboarding-tooltip">
+      <div class="onboarding-step-indicator" id="step-indicator"></div>
+      <h4 class="onboarding-title" id="tooltip-title"></h4>
+      <p class="onboarding-description" id="tooltip-description"></p>
+      <div class="onboarding-actions">
+        <button class="btn btn-outline" id="btn-skip">Skip Tutorial</button>
+        <button class="btn btn-primary" id="btn-next">Next</button>
+      </div>
+      <div class="onboarding-arrow" id="tooltip-arrow"></div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay hidden" id="loading-overlay">
+    <div class="spinner" style="width: 48px; height: 48px; border-width: 3px;"></div>
+    <p class="loading-text" id="loading-text">Analyzing your application...</p>
+  </div>
+
+  <!-- Scripts -->
+  <script src="renderer/app.js"></script>
+  <script src="renderer/onboarding.js"></script>
+  <script src="renderer/loanService.js"></script>
+  <script src="renderer/dashboard.js"></script>
+</body>
+
+</html>
