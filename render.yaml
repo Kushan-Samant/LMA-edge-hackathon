@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: loan-approval-backend
+    runtime: node
+    repo: https://github.com/Kushan-Samant/LMA-edge-hackathon
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: GROQ_API_KEY
+        placeholder: "Paste your Groq API Key here"
