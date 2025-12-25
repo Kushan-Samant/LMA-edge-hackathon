@@ -83,8 +83,10 @@ const Onboarding = {
             const targetEl = document.querySelector(step.target);
             if (targetEl) {
                 const rect = targetEl.getBoundingClientRect();
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
 
-                // Position spotlight
+                // Position spotlight (fixed positioning, so use viewport coords)
                 spotlight.style.display = 'block';
                 spotlight.style.top = `${rect.top - 8}px`;
                 spotlight.style.left = `${rect.left - 8}px`;
@@ -93,6 +95,9 @@ const Onboarding = {
 
                 // Position tooltip based on position
                 this.positionTooltip(tooltip, arrow, rect, step.position);
+
+                // Ensure tooltip stays in viewport
+                this.ensureTooltipInViewport(tooltip);
             }
         } else {
             // Center position (no target)
@@ -107,6 +112,37 @@ const Onboarding = {
         tooltip.style.animation = 'none';
         tooltip.offsetHeight; // Trigger reflow
         tooltip.style.animation = 'fadeSlideIn 0.4s ease';
+    },
+
+    ensureTooltipInViewport(tooltip) {
+        const rect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const padding = 20;
+
+        // Fix if off-screen top
+        if (rect.top < padding) {
+            tooltip.style.top = `${padding}px`;
+            tooltip.style.transform = tooltip.style.transform.replace(/translateY\([^)]+\)/, '');
+        }
+
+        // Fix if off-screen bottom
+        if (rect.bottom > viewportHeight - padding) {
+            tooltip.style.top = `${viewportHeight - rect.height - padding}px`;
+            tooltip.style.transform = tooltip.style.transform.replace(/translateY\([^)]+\)/, '');
+        }
+
+        // Fix if off-screen left
+        if (rect.left < padding) {
+            tooltip.style.left = `${padding}px`;
+            tooltip.style.transform = tooltip.style.transform.replace(/translateX\([^)]+\)/, '');
+        }
+
+        // Fix if off-screen right
+        if (rect.right > viewportWidth - padding) {
+            tooltip.style.left = `${viewportWidth - rect.width - padding}px`;
+            tooltip.style.transform = tooltip.style.transform.replace(/translateX\([^)]+\)/, '');
+        }
     },
 
     positionTooltip(tooltip, arrow, rect, position) {

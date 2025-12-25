@@ -70,6 +70,20 @@ const App = {
         if (viewName === 'dashboard' || viewName === 'history') {
             this.updateDashboard();
         }
+
+        // Enable/disable tutorial button based on view
+        const tutorialBtn = document.getElementById('btn-restart-tutorial');
+        if (tutorialBtn) {
+            if (viewName === 'dashboard') {
+                tutorialBtn.disabled = false;
+                tutorialBtn.style.opacity = '1';
+                tutorialBtn.style.cursor = 'pointer';
+            } else {
+                tutorialBtn.disabled = true;
+                tutorialBtn.style.opacity = '0.5';
+                tutorialBtn.style.cursor = 'not-allowed';
+            }
+        }
     },
 
     setupFormSubmission() {
