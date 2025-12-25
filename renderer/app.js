@@ -95,18 +95,23 @@ const App = {
 
             const formData = {
                 fullName: document.getElementById('fullName').value,
+                dateOfBirth: document.getElementById('dateOfBirth').value,
+                ssnLast4: document.getElementById('ssnLast4').value,
                 email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
                 address: document.getElementById('address').value,
                 city: document.getElementById('city').value,
                 state: document.getElementById('state').value,
-                zipCode: document.getElementById('zipCode').value,
                 employer: document.getElementById('employer').value,
+                jobTitle: document.getElementById('jobTitle').value,
                 employmentYears: parseFloat(document.getElementById('employmentYears').value) || 0,
+                employmentType: document.getElementById('employmentType').value,
                 monthlyIncome: parseFloat(document.getElementById('monthlyIncome').value),
+                housingPayment: parseFloat(document.getElementById('housingPayment').value) || 0,
                 monthlyExpenses: parseFloat(document.getElementById('monthlyExpenses').value),
                 existingDebt: parseFloat(document.getElementById('existingDebt').value) || 0,
                 creditScore: parseInt(document.getElementById('creditScore').value),
+                savingsAmount: parseFloat(document.getElementById('savingsAmount').value) || 0,
                 loanAmount: parseFloat(document.getElementById('loanAmount').value),
                 loanPurpose: document.getElementById('loanPurpose').value,
                 loanTerm: parseInt(document.getElementById('loanTerm').value),
@@ -196,11 +201,52 @@ const App = {
 
         resultDiv.innerHTML = `
       <div class="decision-result ${decision.approved ? 'approved' : 'rejected'}">
-        ${iconSvg}
-        <h2 class="decision-title">${decision.approved ? 'Congratulations! Loan Approved' : 'Application Not Approved'}</h2>
-        <p class="decision-reason">${decision.reason}</p>
-        ${decision.details ? `<p class="text-sm text-gray mt-4">${decision.details}</p>` : ''}
-        <div class="mt-6">
+        <div class="decision-header">
+            ${iconSvg}
+            <div class="decision-header-text">
+                <h2 class="decision-title">${decision.approved ? 'Approved' : 'Declined'}</h2>
+                <div class="badge badge-${decision.riskLevel?.toLowerCase() === 'low' ? 'success' : decision.riskLevel?.toLowerCase() === 'high' ? 'error' : 'warning'}">
+                    Risk Level: ${decision.riskLevel || 'N/A'}
+                </div>
+            </div>
+        </div>
+
+        <div class="decision-body">
+            <p class="decision-reason">${decision.reason}</p>
+            
+            ${decision.approved ? `
+                <div class="decision-stats">
+                    <div class="decision-stat">
+                        <span class="label">Approved Amount</span>
+                        <span class="value">$${(decision.approvedAmount || decision.loanAmount || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="decision-stat">
+                        <span class="label">Interest Rate (APR)</span>
+                        <span class="value">${decision.suggestedRate}%</span>
+                    </div>
+                    <div class="decision-stat">
+                        <span class="label">Monthly Payment</span>
+                        <span class="value">$${(decision.monthlyPayment || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                </div>
+            ` : ''}
+
+            <div class="decision-details">
+                <h4>Underwriting Analysis</h4>
+                <p>${decision.details}</p>
+            </div>
+
+            ${decision.conditions && decision.conditions.length > 0 ? `
+                <div class="decision-conditions">
+                    <h4>Required Next Steps</h4>
+                    <ul>
+                        ${decision.conditions.map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+            ` : ''}
+        </div>
+
+        <div class="decision-actions mt-6">
           <button class="btn btn-primary" onclick="App.navigateTo('dashboard')">View Dashboard</button>
           <button class="btn btn-outline" onclick="App.resetForm()" style="margin-left: var(--space-2);">New Application</button>
         </div>

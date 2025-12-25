@@ -343,21 +343,34 @@
 
         <form id="loan-form" class="grid-2">
           <div class="card">
-            <h3 class="card-title mb-6">Personal Information</h3>
+            <h3 class="card-title mb-6">Personal & Employment Information</h3>
 
             <div class="form-group">
               <label class="form-label" for="fullName">Full Name</label>
               <input type="text" class="form-input" id="fullName" placeholder="John Doe" required>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="email">Email Address</label>
-              <input type="email" class="form-input" id="email" placeholder="john@example.com" required>
+            <div class="grid-2" style="gap: var(--space-4);">
+              <div class="form-group">
+                <label class="form-label" for="dateOfBirth">Date of Birth</label>
+                <input type="date" class="form-input" id="dateOfBirth" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="ssnLast4">SSN (Last 4 digits)</label>
+                <input type="text" class="form-input" id="ssnLast4" placeholder="1234" pattern="[0-9]{4}" maxlength="4"
+                  required>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="phone">Phone Number</label>
-              <input type="tel" class="form-input" id="phone" placeholder="(555) 123-4567" required>
+            <div class="grid-2" style="gap: var(--space-4);">
+              <div class="form-group">
+                <label class="form-label" for="email">Email Address</label>
+                <input type="email" class="form-input" id="email" placeholder="john@example.com" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="phone">Phone Number</label>
+                <input type="tel" class="form-input" id="phone" placeholder="(555) 123-4567" required>
+              </div>
             </div>
 
             <div class="form-group">
@@ -377,43 +390,67 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="zipCode">ZIP Code</label>
-              <input type="text" class="form-input" id="zipCode" placeholder="10001" pattern="[0-9]{5}" required>
-            </div>
-
-            <div class="form-group">
               <label class="form-label" for="employer">Current Employer</label>
               <input type="text" class="form-input" id="employer" placeholder="Company Name" required>
             </div>
 
+            <div class="grid-2" style="gap: var(--space-4);">
+              <div class="form-group">
+                <label class="form-label" for="jobTitle">Job Title</label>
+                <input type="text" class="form-input" id="jobTitle" placeholder="Software Engineer" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="employmentYears">Years at Job</label>
+                <input type="number" class="form-input" id="employmentYears" placeholder="2" min="0" step="0.5"
+                  required>
+              </div>
+            </div>
+
             <div class="form-group">
-              <label class="form-label" for="employmentYears">Years at Current Job</label>
-              <input type="number" class="form-input" id="employmentYears" placeholder="2" min="0" step="0.5" required>
+              <label class="form-label" for="employmentType">Employment Type</label>
+              <select class="form-input" id="employmentType">
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Self-employed">Self-employed</option>
+              </select>
             </div>
           </div>
 
           <div class="card">
             <h3 class="card-title mb-6">Financial & Loan Details</h3>
 
-            <div class="form-group">
-              <label class="form-label" for="monthlyIncome">Monthly Income ($)</label>
-              <input type="number" class="form-input" id="monthlyIncome" placeholder="5000" min="0" required>
+            <div class="grid-2" style="gap: var(--space-4);">
+              <div class="form-group">
+                <label class="form-label" for="monthlyIncome">Gross Monthly Income ($)</label>
+                <input type="number" class="form-input" id="monthlyIncome" placeholder="5000" min="0" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="housingPayment">Housing Payment ($)</label>
+                <input type="number" class="form-input" id="housingPayment" placeholder="1500" min="0" required>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="monthlyExpenses">Monthly Expenses ($)</label>
-              <input type="number" class="form-input" id="monthlyExpenses" placeholder="2000" min="0" required>
+            <div class="grid-2" style="gap: var(--space-4);">
+              <div class="form-group">
+                <label class="form-label" for="monthlyExpenses">Other Expenses ($)</label>
+                <input type="number" class="form-input" id="monthlyExpenses" placeholder="1000" min="0" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="existingDebt">Total Existing Debt ($)</label>
+                <input type="number" class="form-input" id="existingDebt" placeholder="0" min="0" value="0">
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="existingDebt">Existing Debt ($)</label>
-              <input type="number" class="form-input" id="existingDebt" placeholder="0" min="0" value="0">
-              <span class="form-hint">Include credit cards, car loans, mortgages, etc.</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="creditScore">Credit Score (300-850)</label>
-              <input type="number" class="form-input" id="creditScore" placeholder="720" min="300" max="850" required>
+            <div class="grid-2" style="gap: var(--space-4);">
+              <div class="form-group">
+                <label class="form-label" for="creditScore">Credit Score (300-850)</label>
+                <input type="number" class="form-input" id="creditScore" placeholder="720" min="300" max="850" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="savingsAmount">Savings/Liquid Assets ($)</label>
+                <input type="number" class="form-input" id="savingsAmount" placeholder="5000" min="0" value="0">
+              </div>
             </div>
 
             <div class="form-group">
@@ -421,29 +458,30 @@
               <input type="number" class="form-input" id="loanAmount" placeholder="10000" min="1000" required>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="loanPurpose">Loan Purpose</label>
-              <select class="form-input" id="loanPurpose" required>
-                <option value="">Select purpose...</option>
-                <option value="home">Home Improvement</option>
-                <option value="car">Vehicle Purchase</option>
-                <option value="business">Business</option>
-                <option value="education">Education</option>
-                <option value="medical">Medical Expenses</option>
-                <option value="debt">Debt Consolidation</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="loanTerm">Loan Term (months)</label>
-              <select class="form-input" id="loanTerm" required>
-                <option value="12">12 months</option>
-                <option value="24">24 months</option>
-                <option value="36" selected>36 months</option>
-                <option value="48">48 months</option>
-                <option value="60">60 months</option>
-              </select>
+            <div class="grid-2" style="gap: var(--space-4);">
+              <div class="form-group">
+                <label class="form-label" for="loanPurpose">Loan Purpose</label>
+                <select class="form-input" id="loanPurpose" required>
+                  <option value="">Select purpose...</option>
+                  <option value="home">Home Improvement</option>
+                  <option value="car">Vehicle Purchase</option>
+                  <option value="business">Business</option>
+                  <option value="education">Education</option>
+                  <option value="medical">Medical Expenses</option>
+                  <option value="debt">Debt Consolidation</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="loanTerm">Loan Term</label>
+                <select class="form-input" id="loanTerm" required>
+                  <option value="12">12 months</option>
+                  <option value="24">24 months</option>
+                  <option value="36" selected>36 months</option>
+                  <option value="48">48 months</option>
+                  <option value="60">60 months</option>
+                </select>
+              </div>
             </div>
 
             <div class="form-group"
@@ -451,14 +489,15 @@
               <label class="form-label" for="signature">Digital Signature</label>
               <input type="text" class="form-input" id="signature" placeholder="Type your full name as signature"
                 required>
-              <span class="form-hint">By typing your name, you confirm all information is accurate</span>
+              <span class="form-hint">By typing your name, you confirm all information is accurate and authorized</span>
             </div>
 
             <div class="form-group">
               <label class="flex items-center gap-2" style="cursor: pointer;">
                 <input type="checkbox" id="agreeTerms" required
                   style="width: 18px; height: 18px; accent-color: var(--color-primary);">
-                <span class="text-sm">I agree to the terms and conditions and authorize a credit check</span>
+                <span class="text-xs">I authorize LoanAI to perform a hard credit pull and verify employment history. I
+                  certify that all statements made are true and complete under penalty of perjury.</span>
               </label>
             </div>
 
@@ -468,7 +507,7 @@
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22,4 12,14.01 9,11.01" />
               </svg>
-              Get Instant Decision
+              Submit Application
             </button>
           </div>
         </form>
