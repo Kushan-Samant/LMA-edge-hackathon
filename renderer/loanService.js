@@ -4,10 +4,9 @@
  */
 
 const LoanService = {
-    // Groq API configuration
-    API_URL: 'https://api.groq.com/openai/v1/chat/completions',
-    API_KEY: 'YOUR_GROQ_API_KEY', // Replace with your Groq API key (avoid hardcoding in production)
-    MODEL: 'llama-3.1-8b-instant',
+    // Backend Configuration
+    // Change this to your Railway/Render URL after deployment!
+    BACKEND_URL: 'http://localhost:3000',
 
     /**
      * Comprehensive system prompt for realistic loan evaluation
@@ -201,62 +200,28 @@ Please evaluate this loan application and provide your decision in the required 
      */
     async evaluateLoan(formData) {
         try {
-            console.log('Evaluating loan application:', formData);
+            console.log('Evaluating loan application via Backend:', formData);
 
-            const response = await fetch(this.API_URL, {
+            const response = await fetch(`${this.BACKEND_URL}/evaluate-loan`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.API_KEY}`
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    model: this.MODEL,
-                    messages: [
-                        {
-                            role: 'system',
-                            content: this.getSystemPrompt()
-                        },
-                        {
-                            role: 'user',
-                            content: this.buildUserPrompt(formData)
-                        }
-                    ],
-                    temperature: 0.3, // Lower temperature for more consistent decisions
-                    max_tokens: 1000,
-                    response_format: { type: "json_object" }
-                })
+                body: JSON.stringify(formData)
             });
 
             if (!response.ok) {
-                const errorData = await response.text();
-                console.error('API Error:', response.status, errorData);
-                throw new Error(`API request failed: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Server error');
             }
 
-            const data = await response.json();
-            console.log('API Response:', data);
+            const decision = await response.json();
+            console.log('Backend Decision Result:', decision);
 
-            // Parse the AI response
-            const aiResponse = data.choices[0].message.content;
-            let decision;
-
-            try {
-                decision = JSON.parse(aiResponse);
-            } catch (parseError) {
-                console.error('Failed to parse AI response:', aiResponse);
-                // Try to extract JSON from the response
-                const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    decision = JSON.parse(jsonMatch[0]);
-                } else {
-                    throw new Error('Invalid AI response format');
-                }
-            }
-
-            // Ensure required fields exist
+            // Ensure required fields exist in the response
             return {
                 approved: Boolean(decision.approved),
-                reason: decision.reason || (decision.approved ? 'Loan approved based on creditworthiness assessment.' : 'Unable to approve based on current application.'),
+                reason: decision.reason || (decision.approved ? 'Loan approved.' : 'Application declined.'),
                 details: decision.details || '',
                 riskLevel: decision.riskLevel || 'MEDIUM',
                 suggestedRate: decision.suggestedRate || 12,
@@ -265,9 +230,8 @@ Please evaluate this loan application and provide your decision in the required 
             };
 
         } catch (error) {
-            console.error('Loan evaluation error:', error);
-
-            // Fallback to basic algorithmic evaluation if AI fails
+            console.error('Backend communication error:', error);
+            // Fallback to local logic if server is down
             return this.fallbackEvaluation(formData);
         }
     },
