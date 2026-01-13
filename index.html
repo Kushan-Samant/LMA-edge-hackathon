@@ -279,7 +279,7 @@
       <!-- Dashboard View -->
       <div class="view" id="view-dashboard">
         <div class="page-header">
-          <h1 class="page-title">Dashboard</h1>
+          <h1 class="page-title" id="dashboard-greeting">Dashboard</h1>
           <p class="page-subtitle">Overview of your loan applications</p>
         </div>
 
@@ -305,12 +305,14 @@
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Recent Applications</h3>
-            <a href="#" class="btn btn-outline btn-sm" data-view="apply" id="btn-new-application">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              New Application
-            </a>
+            <div class="card-actions">
+              <a href="#" class="btn btn-outline btn-sm" data-view="apply" id="btn-new-application">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                New Application
+              </a>
+            </div>
           </div>
           <div class="table-wrapper">
             <table class="table" id="recent-applications-table">
@@ -320,6 +322,7 @@
                   <th>Amount</th>
                   <th>Purpose</th>
                   <th>Status</th>
+                  <th>Details</th>
                 </tr>
               </thead>
               <tbody id="recent-applications-body">
@@ -339,6 +342,67 @@
         <div class="page-header">
           <h1 class="page-title">Apply for a Loan</h1>
           <p class="page-subtitle">Complete the form below for instant AI-powered approval</p>
+        </div>
+
+        <!-- Testing Controls -->
+        <div class="test-controls-panel">
+          <div class="test-control-header">
+            <div class="test-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+              </svg>
+            </div>
+            <div>
+              <h4 style="margin:0; font-style: normal; font-size: var(--text-sm);">Developer Tools</h4>
+              <p style="margin:0; font-size: var(--text-xs); color: var(--color-text-muted);">Auto-fill application data
+              </p>
+            </div>
+          </div>
+
+          <div class="test-slider-container">
+            <div class="test-slider-labels">
+              <span class="highlight-real">Authentic</span>
+              <span class="highlight-fake">Invalid</span>
+            </div>
+            <input type="range" min="0" max="100" value="0" class="bs-slider" id="bs-slider">
+            <div class="bs-meter-bar">
+              <div class="bs-meter-fill" id="bs-meter-fill"></div>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-sm btn-secondary" id="btn-autofill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1 2-2h11" />
+              <polyline points="9 11 12 14 22 4" />
+            </svg>
+            Auto-Fill
+          </button>
+        </div>
+
+        <!-- Validation Notice -->
+        <div
+          style="background: var(--color-warning-light); border: 1px solid var(--color-warning); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-6);">
+          <div style="display: flex; align-items: start; gap: var(--space-3);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"
+              style="flex-shrink: 0; color: var(--color-warning); margin-top: 2px;">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <div style="flex: 1;">
+              <p
+                style="margin: 0; font-size: var(--text-sm); color: var(--color-text-primary); font-weight: var(--font-medium);">
+                <strong>Important:</strong> Real phone number and email address required
+              </p>
+              <p
+                style="margin: var(--space-2) 0 0 0; font-size: var(--text-xs); color: var(--color-text-secondary); line-height: 1.5;">
+                The application validates phone numbers and email addresses against external services. Auto-fill is
+                provided for developer testing convenience only—please manually update contact information with real,
+                valid data before submission.
+              </p>
+            </div>
+          </div>
         </div>
 
         <form id="loan-form" class="grid-2">
@@ -519,8 +583,30 @@
       <!-- History View -->
       <div class="view hidden" id="view-history">
         <div class="page-header">
-          <h1 class="page-title">Application History</h1>
-          <p class="page-subtitle">View all your past loan applications</p>
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">Application History</h1>
+              <p class="page-subtitle">View all your past loan applications</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn btn-outline btn-sm" id="btn-export-history">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Export CSV
+              </button>
+              <button class="btn btn-outline btn-sm" id="btn-clear-history"
+                style="border-color: var(--color-error-light); color: var(--color-error);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                Clear History
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="card">
@@ -587,6 +673,7 @@
   <script src="renderer/app.js"></script>
   <script src="renderer/onboarding.js"></script>
   <script src="renderer/loanService.js"></script>
+  <script src="renderer/test-generator.js"></script>
   <script src="renderer/dashboard.js"></script>
 </body>
 

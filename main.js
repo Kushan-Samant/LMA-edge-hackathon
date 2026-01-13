@@ -1,11 +1,41 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const { spawn } = require('child_process');
 
 let mainWindow;
 let authWindow = null;
+let serverProcess = null;
 
 // Google OAuth configuration - these should match your Firebase project
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '948612358058-nl7gdk2m1c0od5uddlud5q50nnkra107.apps.googleusercontent.com';
+
+// Start the backend server
+function startBackendServer() {
+  const serverPath = path.join(__dirname, 'server', 'index.js');
+
+  console.log('Starting backend server from:', serverPath);
+
+  serverProcess = spawn('node', [serverPath], {
+    cwd: path.join(__dirname, 'server'),
+    env: { ...process.env, PORT: '3000' }
+  });
+
+  serverProcess.stdout.on('data', (data) => {
+    console.log(`[Backend]: ${data}`);
+  });
+
+  serverProcess.stderr.on('data', (data) => {
+    console.error(`[Backend Error]: ${data}`);
+  });
+
+  serverProcess.on('close', (code) => {
+    console.log(`Backend server exited with code ${code}`);
+    serverProcess = null;
+  });
+
+  // Give the server a moment to start
+  return new Promise(resolve => setTimeout(resolve, 2000));
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -36,7 +66,10 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Start backend server first
+  await startBackendServer();
+
   createWindow();
 
   app.on('activate', () => {
@@ -47,8 +80,22 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  // Kill the backend server when app closes
+  if (serverProcess) {
+    serverProcess.kill();
+    serverProcess = null;
+  }
+
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+// Ensure server is killed on app quit
+app.on('before-quit', () => {
+  if (serverProcess) {
+    serverProcess.kill();
+    serverProcess = null;
   }
 });
 

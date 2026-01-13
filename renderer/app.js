@@ -12,6 +12,7 @@ const App = {
         this.setupNavigation();
         this.setupFormSubmission();
         this.updateDashboard();
+        this.setupAuthSync();
 
         // Check for first launch and start tutorial
         setTimeout(() => {
@@ -43,6 +44,36 @@ const App = {
         document.getElementById('btn-restart-tutorial')?.addEventListener('click', () => {
             Onboarding.start();
         });
+
+        // Export history button
+        document.getElementById('btn-export-history')?.addEventListener('click', () => {
+            Dashboard.exportHistory();
+        });
+
+        // Clear history button
+        document.getElementById('btn-clear-history')?.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear your loan history? This cannot be undone.')) {
+                this.loanHistory = [];
+                this.saveHistory();
+            }
+        });
+    },
+
+    setupAuthSync() {
+        // Listen for user changes from Auth
+        const originalHandleAuthSuccess = Auth.handleAuthSuccess.bind(Auth);
+        Auth.handleAuthSuccess = (user) => {
+            originalHandleAuthSuccess(user);
+            this.loadHistory();
+            this.updateDashboard();
+        };
+
+        const originalLogout = Auth.logout.bind(Auth);
+        Auth.logout = async () => {
+            await originalLogout();
+            this.loadHistory();
+            this.updateDashboard();
+        };
     },
 
     navigateTo(viewName) {
@@ -69,6 +100,11 @@ const App = {
         // Update dashboard when navigating to it
         if (viewName === 'dashboard' || viewName === 'history') {
             this.updateDashboard();
+        }
+
+        // Pre-fill form if navigating to apply and user is logged in
+        if (viewName === 'apply' && Auth.currentUser) {
+            this.prefillForm();
         }
 
         // Enable/disable tutorial button based on view
@@ -213,6 +249,15 @@ const App = {
 
         <div class="decision-body">
             <p class="decision-reason">${decision.reason}</p>
+
+            ${!decision.approved && decision.rejectionReasons && decision.rejectionReasons.length > 0 ? `
+                <div class="rejection-reasons-list mt-4">
+                    <h4 class="text-error font-bold mb-2">Detailed Rejection Factors:</h4>
+                    <ul class="list-disc ml-6 space-y-1">
+                        ${decision.rejectionReasons.map(r => `<li class="text-sm">${r}</li>`).join('')}
+                    </ul>
+                </div>
+            ` : ''}
             
             ${decision.approved ? `
                 <div class="decision-stats">
@@ -262,23 +307,58 @@ const App = {
         document.getElementById('loan-form').reset();
         document.getElementById('decision-result').classList.add('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Re-prefill if logged in
+        if (Auth.currentUser) {
+            this.prefillForm();
+        }
+    },
+
+    prefillForm() {
+        const nameInput = document.getElementById('fullName');
+        const emailInput = document.getElementById('email');
+
+        if (nameInput && Auth.currentUser.displayName) {
+            nameInput.value = Auth.currentUser.displayName;
+        }
+        if (emailInput && Auth.currentUser.email) {
+            emailInput.value = Auth.currentUser.email;
+        }
     },
 
     loadHistory() {
         try {
-            const saved = localStorage.getItem('loanHistory');
+            const uid = Auth.currentUser ? Auth.currentUser.uid : 'guest';
+            const saved = localStorage.getItem(`loanHistory_${uid}`);
             this.loanHistory = saved ? JSON.parse(saved) : [];
+
+            // Fallback to legacy key if guest or first time
+            if (uid === 'guest' && this.loanHistory.length === 0) {
+                const legacy = localStorage.getItem('loanHistory');
+                if (legacy) {
+                    this.loanHistory = JSON.parse(legacy);
+                }
+            }
         } catch (e) {
+            console.error('Error loading history:', e);
             this.loanHistory = [];
         }
     },
 
     saveHistory() {
-        localStorage.setItem('loanHistory', JSON.stringify(this.loanHistory));
+        const uid = Auth.currentUser ? Auth.currentUser.uid : 'guest';
+        localStorage.setItem(`loanHistory_${uid}`, JSON.stringify(this.loanHistory));
         this.updateDashboard();
     },
 
     updateDashboard() {
+        // Update greeting
+        const greetingEl = document.getElementById('dashboard-greeting');
+        if (greetingEl) {
+            const name = Auth.currentUser ? Auth.currentUser.displayName.split(' ')[0] : 'Guest';
+            greetingEl.textContent = `Welcome back, ${name}`;
+        }
+
         // Update stats
         const total = this.loanHistory.length;
         const approved = this.loanHistory.filter(l => l.status === 'approved').length;
@@ -321,6 +401,11 @@ const App = {
         <td>$${app.loanAmount.toLocaleString()}</td>
         <td>${this.formatPurpose(app.loanPurpose)}</td>
         <td><span class="badge badge-${app.status === 'approved' ? 'success' : 'error'}">${app.status}</span></td>
+        <td>
+          <button class="btn btn-outline btn-xs" onclick="App.showApplicationDetails('${app.id}')" style="padding: 2px 8px; font-size: 10px;">
+            View
+          </button>
+        </td>
       </tr>
     `).join('');
     },

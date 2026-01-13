@@ -577,7 +577,39 @@ const Auth = {
         const menu = document.getElementById('account-menu');
         if (menu) {
             menu.classList.toggle('active');
+            if (menu.classList.contains('active')) {
+                this.updateAccountMenuStats();
+            }
         }
+    },
+
+    updateAccountMenuStats() {
+        const statsEl = document.getElementById('account-menu-stats');
+        if (!statsEl) {
+            const divider = document.querySelector('.account-menu-divider');
+            const newStatsEl = document.createElement('div');
+            newStatsEl.id = 'account-menu-stats';
+            newStatsEl.className = 'account-menu-stats';
+            divider.after(newStatsEl);
+            this.renderMenuStats(newStatsEl);
+        } else {
+            this.renderMenuStats(statsEl);
+        }
+    },
+
+    renderMenuStats(el) {
+        const approved = App.loanHistory.filter(l => l.status === 'approved').length;
+        const total = App.loanHistory.length;
+        el.innerHTML = `
+            <div class="menu-stat">
+                <span class="label">Applications</span>
+                <span class="value">${total}</span>
+            </div>
+            <div class="menu-stat">
+                <span class="label">Approved</span>
+                <span class="value">${approved}</span>
+            </div>
+        `;
     },
 
     closeAccountMenu() {

@@ -4,8 +4,7 @@
  */
 
 const LoanService = {
-    // Backend Configuration
-    // Change this to your Railway/Render URL after deployment!
+    // Backend Configuration (Local for Dev, Render for Prod)
     BACKEND_URL: 'http://localhost:3000',
 
     /**
@@ -13,103 +12,32 @@ const LoanService = {
      * Based on real banking and lending industry standards
      */
     getSystemPrompt() {
-        return `You are an expert loan underwriter AI system for a financial institution. Your role is to evaluate loan applications using standard lending industry criteria and provide fair, well-reasoned decisions.
+        return `You are an expert loan underwriter AI system with advanced fraud detection capabilities. 
 
-## YOUR EVALUATION FRAMEWORK
+## CORE UNDERWRITING CRITERIA
+1. **DTI Ratio**: Target < 43%. Max 50%.
+2. **Credit Score**: 300-850 scale. < 550 is usually an auto-decline.
+3. **Employment**: Min 2 years for stability. < 6 months is high risk.
 
-### 1. DEBT-TO-INCOME RATIO (DTI) - Weight: 35%
-Calculate: (Monthly Debt Payments + Proposed Loan Payment) / Gross Monthly Income × 100
+## LOGICAL CONSISTENCY & FRAUD PROTOCOLS (PRE-FILTER)
+You MUST reject applications that contain nonsense, offensive, or impossible data:
+1. **Gibberish & Offense**: If Name, Employer, or Address are random strings or contain slurs/insults, REJECT immediately.
+2. **Job-Income Alignment**: Does the salary make sense for the title? (e.g., A "Cashier" making $5M/yr is FRAUD).
+3. **Financial Insanity**: Monthly income of $1B for a $500 loan is FRAUD. 
+4. **Temporal Logic**: Age - Years at Job < 16 is impossible. Birth date in future is impossible.
+5. **Real-world Cushion**: If income is $10k/mo but expenses are $0, it's fake. Real people have bills.
 
-DTI Thresholds:
-- EXCELLENT: ≤ 20% - Very low risk, strong approval candidate
-- GOOD: 21-35% - Acceptable risk, likely approval
-- FAIR: 36-43% - Moderate risk, conditional approval possible
-- POOR: 44-50% - High risk, requires exceptional factors for approval
-- REJECT: > 50% - Automatic decline unless extraordinary circumstances
-
-### 2. CREDIT SCORE ANALYSIS - Weight: 30%
-Score Ranges and Risk Assessment:
-- EXCELLENT (750-850): Premium rates, automatic approval consideration
-- GOOD (700-749): Standard rates, favorable approval odds
-- FAIR (650-699): Higher rates, requires strong income/employment
-- POOR (580-649): Subprime consideration, high rates, strict terms
-- VERY POOR (300-579): High rejection probability, requires substantial collateral or co-signer
-
-### 3. EMPLOYMENT STABILITY - Weight: 15%
-- 5+ years: Excellent stability, positive factor
-- 3-5 years: Good stability
-- 1-3 years: Acceptable, but higher scrutiny
-- 0.5-1 year: Concerning, requires strong other factors
-- < 6 months: Red flag, typically requires denial or co-signer
-
-### 4. LOAN-TO-INCOME RATIO - Weight: 10%
-Calculate: Total Loan Amount / Annual Gross Income
-
-Thresholds:
-- ≤ 0.5: Very conservative, easily manageable
-- 0.5-1.0: Standard personal loan range
-- 1.0-2.0: Requires good credit and low existing debt
-- > 2.0: Generally too high for unsecured personal loans
-
-### 5. DISPOSABLE INCOME ASSESSMENT - Weight: 10%
-Monthly Disposable = Monthly Income - Monthly Expenses - Existing Debt Payments
-Must have sufficient cushion after proposed loan payment (minimum 15-20% of income)
-
-## LOAN PURPOSE RISK FACTORS
-
-Different loan purposes carry different risk profiles:
-- **Home Improvement**: Lower risk - adds equity to property
-- **Debt Consolidation**: Medium-low risk - if it improves DTI
-- **Vehicle Purchase**: Medium risk - asset-backed consideration
-- **Education**: Medium risk - investment in earning potential
-- **Medical Expenses**: Medium risk - necessity-based
-- **Business**: Higher risk - uncertain returns
-- **Other/Unspecified**: Higher scrutiny required
-
-## APPROVAL DECISION MATRIX
-
-**APPROVE if:**
-- DTI < 43% AND Credit Score ≥ 650 AND Employment ≥ 1 year
-- OR DTI < 36% AND Credit Score ≥ 600 AND Employment ≥ 2 years
-- OR Credit Score ≥ 750 AND DTI < 50% AND Employment ≥ 1 year (premium applicant exception)
-- AND Loan-to-Income Ratio ≤ 2.0
-- AND Sufficient disposable income post-loan
-
-**CONDITIONALLY APPROVE if:**
-- Borderline factors with strong compensating factors
-- May require reduced loan amount, shorter term, or higher rate
-
-**DENY if:**
-- DTI > 50% (hard limit)
-- Credit Score < 550 with no compensating factors
-- Employment < 6 months with no stable income history
-- Insufficient disposable income for loan payment
-- Loan amount is grossly disproportionate to income
-- Signs of financial overextension
-
-## RESPONSE FORMAT
-
-You MUST respond with a valid JSON object in this exact structure:
+## RESPONSE FORMAT (JSON ONLY)
 {
     "approved": boolean,
-    "reason": "Clear 1-2 sentence explanation of the primary decision factor",
-    "details": "Detailed analysis covering: DTI calculation, credit assessment, employment evaluation, and key factors influencing the decision. Include specific numbers and percentages.",
+    "reason": "If approved: 1-2 sentence logic summary. If REJECTED: Bullet points of EVERY issue found.",
+    "rejectionReasons": ["Array of specific reasons for rejection"],
+    "details": "Calculations: DTI, Age check, Disposable Income cushion",
     "riskLevel": "LOW" | "MEDIUM" | "HIGH",
-    "suggestedRate": number (APR as decimal, e.g., 8.5 for 8.5%),
-    "monthlyPayment": number (estimated monthly payment),
-    "conditions": ["Array of conditions if conditionally approved, empty if clean approval or denial"]
-}
-
-## IMPORTANT GUIDELINES
-
-1. Be FAIR and BALANCED - not too lenient, not too harsh
-2. Use REAL CALCULATIONS - show your math in the details
-3. Consider the FULL PICTURE - one weak area can be offset by strengths
-4. Be SPECIFIC - avoid vague generalizations
-5. Calculate the monthly payment using: P × (r(1+r)^n) / ((1+r)^n - 1) where P=principal, r=monthly rate, n=months
-6. Suggest appropriate interest rates based on risk (typically 6-24% APR for personal loans)
-
-Remember: Your goal is to make sound lending decisions that protect both the lender from excessive risk AND give fair opportunities to creditworthy borrowers.`;
+    "suggestedRate": number (APR),
+    "monthlyPayment": number (Math: P * (r(1+r)^n) / ((1+r)^n - 1)),
+    "conditions": ["Array of next steps"]
+}`;
     },
 
     /**
@@ -123,76 +51,63 @@ Remember: Your goal is to make sound lending decisions that protect both the len
         return Math.round(payment * 100) / 100;
     },
 
-    /**
-     * Build the user prompt with all application data
-     */
     buildUserPrompt(formData) {
-        // Calculate key metrics to include
         const annualIncome = formData.monthlyIncome * 12;
-        const monthlyDebtPayments = formData.existingDebt > 0 ? formData.existingDebt * 0.03 : 0; // Estimate 3% minimum payment
+        const monthlyDebtPayments = formData.existingDebt > 0 ? formData.existingDebt * 0.03 : 0;
         const loanToIncomeRatio = formData.loanAmount / annualIncome;
         const disposableIncome = formData.monthlyIncome - formData.monthlyExpenses - monthlyDebtPayments;
-
-        // Estimate monthly payment at 12% APR for DTI calculation
-        const estimatedPayment = this.calculateMonthlyPayment(formData.loanAmount, 12, formData.loanTerm);
-        const estimatedDTI = ((monthlyDebtPayments + estimatedPayment) / formData.monthlyIncome) * 100;
+        const age = formData.dateOfBirth ? Math.floor((new Date() - new Date(formData.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) : 'Unknown';
 
         return `## LOAN APPLICATION FOR EVALUATION
 
-### APPLICANT INFORMATION
-- **Full Legal Name:** ${formData.fullName}
+### APPLICANT
+- **Name:** ${formData.fullName}
 - **Email:** ${formData.email}
 - **Phone:** ${formData.phone}
-- **Address:** ${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}
-- **Date of Birth:** ${formData.dateOfBirth || 'Not provided'}
-- **SSN Last 4:** ${formData.ssnLast4 || 'Not provided'}
+- **DOB:** ${formData.dateOfBirth} (Calculated Age: ${age})
+- **Address:** ${formData.address}, ${formData.city}, ${formData.state}
+- **SSN Last 4:** ${formData.ssnLast4}
 
 ### EMPLOYMENT & INCOME
-- **Current Employer:** ${formData.employer}
-- **Job Title:** ${formData.jobTitle || 'Not specified'}
-- **Employment Type:** ${formData.employmentType || 'Full-time'}
-- **Years at Current Employer:** ${formData.employmentYears} years
-- **Gross Monthly Income:** $${formData.monthlyIncome.toLocaleString()}
-- **Annual Income:** $${annualIncome.toLocaleString()}
-- **Additional Income:** $${(formData.additionalIncome || 0).toLocaleString()}/month
-- **Income Source (Additional):** ${formData.additionalIncomeSource || 'N/A'}
+- **Employer:** ${formData.employer}
+- **Job Title:** ${formData.jobTitle}
+- **Years at Job:** ${formData.employmentYears}
+- **Monthly Income:** $${formData.monthlyIncome}
+- **Monthly Expenses:** $${formData.monthlyExpenses}
+- **Existing Debt:** $${formData.existingDebt}
+- **Disposable Income:** $${disposableIncome}
 
-### MONTHLY EXPENSES & OBLIGATIONS
-- **Total Monthly Expenses:** $${formData.monthlyExpenses.toLocaleString()}
-- **Housing Payment (Rent/Mortgage):** $${(formData.housingPayment || 0).toLocaleString()}
-- **Current Total Debt:** $${formData.existingDebt.toLocaleString()}
-- **Monthly Debt Payments (estimated):** $${Math.round(monthlyDebtPayments).toLocaleString()}
-- **Disposable Income:** $${Math.round(disposableIncome).toLocaleString()}
+### REQUEST
+- **Amount:** $${formData.loanAmount}
+- **Purpose:** ${formData.loanPurpose}
+- **Term:** ${formData.loanTerm} months
+- **Credit Score:** ${formData.creditScore}
 
-### CREDIT PROFILE
-- **Reported Credit Score:** ${formData.creditScore}
-- **Bankruptcy History:** ${formData.bankruptcyHistory || 'None reported'}
-- **Foreclosure History:** ${formData.foreclosureHistory || 'None reported'}
+### ASSETS
+- **Savings:** $${formData.savingsAmount}
 
-### LOAN REQUEST DETAILS
-- **Loan Amount Requested:** $${formData.loanAmount.toLocaleString()}
-- **Loan Purpose:** ${formData.loanPurpose}
-- **Loan Purpose Details:** ${formData.loanPurposeDetails || 'Not provided'}
-- **Requested Term:** ${formData.loanTerm} months
-- **Preferred Payment Date:** ${formData.preferredPaymentDate || '1st of month'}
+Please evaluate for logic, realism, and financial risk.`;
+    },
 
-### ASSETS & COLLATERAL
-- **Bank Account Type:** ${formData.bankAccountType || 'Checking'}
-- **Savings/Investments:** $${(formData.savingsAmount || 0).toLocaleString()}
-- **Property Ownership:** ${formData.propertyOwnership || 'Not specified'}
-- **Vehicle Ownership:** ${formData.vehicleOwnership || 'Not specified'}
+    /**
+     * Helper to detect repetitive placeholder strings
+     */
+    isRepetitive(data) {
+        const values = [
+            data.fullName,
+            data.address,
+            data.city,
+            data.employer,
+            data.jobTitle
+        ].filter(v => v && v.length > 3);
 
-### PRE-CALCULATED METRICS (for reference)
-- **Loan-to-Income Ratio:** ${(loanToIncomeRatio * 100).toFixed(1)}%
-- **Estimated Monthly Payment (at 12% APR):** $${estimatedPayment.toLocaleString()}
-- **Preliminary DTI (with new loan):** ${estimatedDTI.toFixed(1)}%
-
-### DECLARATIONS
-- **US Citizen/Resident:** ${formData.usCitizen ? 'Yes' : 'No/Not specified'}
-- **Active Military:** ${formData.activeMilitary ? 'Yes' : 'No'}
-- **Co-applicant:** ${formData.hasCoApplicant ? 'Yes' : 'No'}
-
-Please evaluate this loan application and provide your decision in the required JSON format.`;
+        const counts = {};
+        for (const v of values) {
+            const low = v.toLowerCase();
+            counts[low] = (counts[low] || 0) + 1;
+            if (counts[low] >= 3) return true;
+        }
+        return false;
     },
 
     /**
@@ -222,6 +137,7 @@ Please evaluate this loan application and provide your decision in the required 
             return {
                 approved: Boolean(decision.approved),
                 reason: decision.reason || (decision.approved ? 'Loan approved.' : 'Application declined.'),
+                rejectionReasons: decision.rejectionReasons || [],
                 details: decision.details || '',
                 riskLevel: decision.riskLevel || 'MEDIUM',
                 suggestedRate: decision.suggestedRate || 12,
@@ -251,6 +167,41 @@ Please evaluate this loan application and provide your decision in the required 
         let approved = true;
         let reasons = [];
         let riskLevel = 'LOW';
+
+        // 1. SANITY CHECKS (Local Fallback)
+        const age = formData.dateOfBirth ? Math.floor((new Date() - new Date(formData.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) : 0;
+
+        if (age < 18) {
+            approved = false;
+            reasons.push(age <= 0 ? "Logically impossible date of birth." : "Applicant must be at least 18 years old.");
+        }
+
+        if (formData.monthlyIncome > 10000000) { // $10M/mo is suspicious for a simple app
+            approved = false;
+            reasons.push("Income level exceeds verifiable individual limits for online processing.");
+        }
+
+        if (formData.employmentYears > age - 16) {
+            approved = false;
+            reasons.push("Employment duration is logically inconsistent with applicant age.");
+        }
+
+        // 2. REPETITIVE DATA CHECK
+        if (this.isRepetitive(formData)) {
+            approved = false;
+            reasons.push("Multiple fields contain repetitive placeholder information (e.g. 'Google User').");
+        }
+
+        // 3. FINANCIAL REALISM
+        if (formData.monthlyIncome > 50000 && (formData.housingPayment < 100 || formData.savingsAmount < 100)) {
+            approved = false;
+            reasons.push("Reported income vs expenses/savings ratio is statistically impossible.");
+        }
+
+        if (formData.phone && (formData.phone.length < 10 || formData.phone.length > 11)) {
+            approved = false;
+            reasons.push("Invalid phone number format provided.");
+        }
 
         // Check DTI
         if (dti > 50) {
@@ -314,7 +265,8 @@ Please evaluate this loan application and provide your decision in the required 
             approved,
             reason: approved
                 ? `Your application meets our lending criteria with a credit score of ${formData.creditScore} and DTI of ${dti.toFixed(1)}%.`
-                : reasons[0] || 'Application does not meet current lending requirements.',
+                : "Your application was declined due to multiple risk factors.",
+            rejectionReasons: !approved ? reasons : [],
             details: `DTI: ${dti.toFixed(1)}% | Credit Score: ${formData.creditScore} | Employment: ${formData.employmentYears} years | Loan-to-Income: ${(loanToIncome * 100).toFixed(1)}% | Disposable Income: $${Math.round(disposable).toLocaleString()}/month`,
             riskLevel,
             suggestedRate,

@@ -9,10 +9,12 @@ const SolarOrbit = {
     renderer: null,
     sun: null,
     planets: [],
-    asteroids: [],
+    asteroidMesh: null,
+    asteroidData: [],
     particles: null,
     coronaParticles: null,
     time: 0,
+    dummy: new THREE.Object3D(),
 
     // Camera orbital controls
     cameraControls: {
@@ -192,10 +194,11 @@ const SolarOrbit = {
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
             antialias: true,
-            alpha: true
+            alpha: true,
+            powerPreference: 'high-performance'
         });
         this.renderer.setSize(container.offsetWidth, container.offsetHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(window.devicePixelRatio > 1 ? 2 : 1);
         this.renderer.setClearColor(0x000000, 0);
 
         // Enable pointer events for dragging
@@ -303,15 +306,22 @@ const SolarOrbit = {
         const controls = this.cameraControls;
         const damping = controls.damping;
 
-        controls.spherical.theta += (controls.targetSpherical.theta - controls.spherical.theta) * damping;
-        controls.spherical.phi += (controls.targetSpherical.phi - controls.spherical.phi) * damping;
-        controls.spherical.radius += (controls.targetSpherical.radius - controls.spherical.radius) * damping;
+        const dt = controls.targetSpherical.theta - controls.spherical.theta;
+        const dp = controls.targetSpherical.phi - controls.spherical.phi;
+        const dr = controls.targetSpherical.radius - controls.spherical.radius;
+
+        if (Math.abs(dt) < 0.001 && Math.abs(dp) < 0.001 && Math.abs(dr) < 0.001 && !controls.isDragging) return;
+
+        controls.spherical.theta += dt * damping;
+        controls.spherical.phi += dp * damping;
+        controls.spherical.radius += dr * damping;
 
         const { radius, theta, phi } = controls.spherical;
+        const sinPhi = Math.sin(phi);
 
-        this.camera.position.x = radius * Math.sin(phi) * Math.sin(theta);
+        this.camera.position.x = radius * sinPhi * Math.sin(theta);
         this.camera.position.y = radius * Math.cos(phi);
-        this.camera.position.z = radius * Math.sin(phi) * Math.cos(theta);
+        this.camera.position.z = radius * sinPhi * Math.cos(theta);
 
         this.camera.lookAt(controls.target.x, controls.target.y, controls.target.z);
     },
@@ -643,56 +653,49 @@ const SolarOrbit = {
     },
 
     createAsteroidBelt() {
-        // Asteroid belt between Mars and Jupiter
-        const asteroidCount = 500;
+        const count = 800;
         const innerRadius = 10.5;
-        const outerRadius = 13;
+        const outerRadius = 13.5;
 
-        for (let i = 0; i < asteroidCount; i++) {
-            const geometry = new THREE.IcosahedronGeometry(0.03 + Math.random() * 0.08, 0);
+        // Use InstancedMesh for massive performance boost
+        const geometry = new THREE.IcosahedronGeometry(1, 0);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x666655,
+            roughness: 0.9,
+            flatShading: true
+        });
 
-            // Deform for irregular shape
-            const positions = geometry.attributes.position;
-            for (let j = 0; j < positions.count; j++) {
-                const x = positions.getX(j);
-                const y = positions.getY(j);
-                const z = positions.getZ(j);
-                const noise = (Math.random() - 0.5) * 0.4;
-                const length = Math.sqrt(x * x + y * y + z * z);
-                const newLength = length + noise;
-                positions.setX(j, (x / length) * newLength);
-                positions.setY(j, (y / length) * newLength);
-                positions.setZ(j, (z / length) * newLength);
-            }
-            geometry.computeVertexNormals();
+        this.asteroidMesh = new THREE.InstancedMesh(geometry, material, count);
 
-            const material = new THREE.MeshStandardMaterial({
-                color: 0x666655,
-                roughness: 0.9,
-                flatShading: true
-            });
-
-            const asteroid = new THREE.Mesh(geometry, material);
-
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < count; i++) {
             const distance = innerRadius + Math.random() * (outerRadius - innerRadius);
             const angle = Math.random() * Math.PI * 2;
             const height = (Math.random() - 0.5) * 1;
+            const size = 0.03 + Math.random() * 0.08;
 
-            asteroid.userData = {
-                distance: distance,
-                angle: angle,
-                height: height,
-                speed: 0.3 + Math.random() * 0.2,
-                rotationSpeed: {
-                    x: (Math.random() - 0.5) * 0.02,
-                    y: (Math.random() - 0.5) * 0.02,
-                    z: (Math.random() - 0.5) * 0.02
-                }
-            };
+            dummy.position.set(
+                Math.cos(angle) * distance,
+                height,
+                Math.sin(angle) * distance
+            );
+            dummy.scale.setScalar(size);
+            dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+            dummy.updateMatrix();
+            this.asteroidMesh.setMatrixAt(i, dummy.matrix);
 
-            this.asteroids.push(asteroid);
-            this.scene.add(asteroid);
+            this.asteroidData.push({
+                distance,
+                angle,
+                height,
+                speed: 0.1 + Math.random() * 0.2,
+                rotX: (Math.random() - 0.5) * 0.02,
+                rotY: (Math.random() - 0.5) * 0.02,
+                rotZ: (Math.random() - 0.5) * 0.02
+            });
         }
+
+        this.scene.add(this.asteroidMesh);
     },
 
     createStarfield() {
@@ -904,7 +907,7 @@ const SolarOrbit = {
         this.updateCameraPosition();
         this.animateSun();
         this.animatePlanets();
-        this.animateAsteroids();
+        this.animateAsteroidMesh();
         this.animateCoronaParticles();
 
         if (this.particles) {
@@ -937,101 +940,102 @@ const SolarOrbit = {
     },
 
     animatePlanets() {
-        this.planets.forEach(planetGroup => {
+        const planets = this.planets;
+        const timeFactor = 0.003;
+        const moonFactor = 0.01;
+
+        for (let i = 0; i < planets.length; i++) {
+            const planetGroup = planets[i];
             const data = planetGroup.userData;
 
-            // Orbital motion
-            data.angle += data.speed * 0.003;
+            data.angle += data.speed * timeFactor;
 
-            planetGroup.position.x = Math.cos(data.angle) * data.distance;
-            planetGroup.position.z = Math.sin(data.angle) * data.distance;
-            planetGroup.position.y = Math.sin(data.angle * 2) * data.tilt * 0.5;
+            const cosA = Math.cos(data.angle);
+            const sinA = Math.sin(data.angle);
 
-            // Planet rotation
-            if (data.planet) {
-                data.planet.rotation.y += data.rotationSpeed;
-            }
+            planetGroup.position.x = cosA * data.distance;
+            planetGroup.position.z = sinA * data.distance;
+            planetGroup.position.y = sinA * data.tilt * 0.5;
 
-            // Apply axial tilt
+            if (data.planet) data.planet.rotation.y += data.rotationSpeed;
             planetGroup.rotation.z = data.tilt;
 
-            // Animate moon (Earth)
             if (data.moon) {
-                data.moon.userData.angle += data.moon.userData.speed * 0.01;
-                const moonAngle = data.moon.userData.angle;
-                const moonDist = data.moon.userData.distance;
-                data.moon.position.x = Math.cos(moonAngle) * moonDist;
-                data.moon.position.z = Math.sin(moonAngle) * moonDist;
+                const mData = data.moon.userData;
+                mData.angle += mData.speed * moonFactor;
+                data.moon.position.x = Math.cos(mData.angle) * mData.distance;
+                data.moon.position.z = Math.sin(mData.angle) * mData.distance;
             }
 
-            // Animate moons (Jupiter)
             if (data.moons) {
-                data.moons.forEach(moon => {
-                    moon.userData.angle += moon.userData.speed * 0.01;
-                    const moonAngle = moon.userData.angle;
-                    const moonDist = moon.userData.distance;
-                    moon.position.x = Math.cos(moonAngle) * moonDist;
-                    moon.position.z = Math.sin(moonAngle) * moonDist;
-                });
+                for (let j = 0; j < data.moons.length; j++) {
+                    const moon = data.moons[j];
+                    moon.userData.angle += moon.userData.speed * moonFactor;
+                    moon.position.x = Math.cos(moon.userData.angle) * moon.userData.distance;
+                    moon.position.z = Math.sin(moon.userData.angle) * moon.userData.distance;
+                }
             }
-        });
+        }
     },
 
-    animateAsteroids() {
-        this.asteroids.forEach(asteroid => {
-            const data = asteroid.userData;
+    animateAsteroidMesh() {
+        if (!this.asteroidMesh) return;
 
-            // Orbital motion
-            data.angle += data.speed * 0.002;
+        const dummy = this.dummy;
+        const timeFactor = 0.0015;
 
-            asteroid.position.x = Math.cos(data.angle) * data.distance;
-            asteroid.position.z = Math.sin(data.angle) * data.distance;
-            asteroid.position.y = data.height + Math.sin(data.angle * 3) * 0.1;
+        for (let i = 0; i < this.asteroidData.length; i++) {
+            const data = this.asteroidData[i];
+            data.angle += data.speed * timeFactor;
 
-            // Tumbling rotation
-            asteroid.rotation.x += data.rotationSpeed.x;
-            asteroid.rotation.y += data.rotationSpeed.y;
-            asteroid.rotation.z += data.rotationSpeed.z;
-        });
+            const x = Math.cos(data.angle) * data.distance;
+            const z = Math.sin(data.angle) * data.distance;
+            const y = data.height + Math.sin(data.angle * 3) * 0.1;
+
+            dummy.position.set(x, y, z);
+            dummy.rotation.x += data.rotX;
+            dummy.rotation.y += data.rotY;
+            dummy.rotation.z += data.rotZ;
+            dummy.scale.setScalar(0.05 + (i % 5) * 0.01); // Varied sizes recycled
+
+            dummy.updateMatrix();
+            this.asteroidMesh.setMatrixAt(i, dummy.matrix);
+        }
+        this.asteroidMesh.instanceMatrix.needsUpdate = true;
     },
 
     animateCoronaParticles() {
         if (!this.coronaParticles) return;
 
-        const positions = this.coronaParticles.geometry.attributes.position;
+        const attr = this.coronaParticles.geometry.attributes.position;
+        const positions = attr.array;
         const velocities = this.coronaParticles.userData.velocities;
 
         for (let i = 0; i < velocities.length; i++) {
-            let x = positions.getX(i);
-            let y = positions.getY(i);
-            let z = positions.getZ(i);
+            const i3 = i * 3;
+            positions[i3] += velocities[i].x;
+            positions[i3 + 1] += velocities[i].y;
+            positions[i3 + 2] += velocities[i].z;
 
-            x += velocities[i].x;
-            y += velocities[i].y;
-            z += velocities[i].z;
+            velocities[i].life += 0.012;
 
-            velocities[i].life += 0.01;
-
-            const dist = Math.sqrt(x * x + y * y + z * z);
-            if (dist > 3.5 || velocities[i].life > 1) {
+            if (velocities[i].life > 1) {
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos(2 * Math.random() - 1);
                 const radius = 1.5 + Math.random() * 0.2;
 
-                x = radius * Math.sin(phi) * Math.cos(theta);
-                y = radius * Math.sin(phi) * Math.sin(theta);
-                z = radius * Math.cos(phi);
+                positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i3 + 2] = radius * Math.cos(phi);
 
-                velocities[i].x = x * 0.018;
-                velocities[i].y = y * 0.018;
-                velocities[i].z = z * 0.018;
+                velocities[i].x = positions[i3] * 0.02;
+                velocities[i].y = positions[i3 + 1] * 0.02;
+                velocities[i].z = positions[i3 + 2] * 0.02;
                 velocities[i].life = 0;
             }
-
-            positions.setXYZ(i, x, y, z);
         }
 
-        positions.needsUpdate = true;
+        attr.needsUpdate = true;
     }
 };
 
