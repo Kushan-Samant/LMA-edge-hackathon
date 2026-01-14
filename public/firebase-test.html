@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Configuration Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .pending {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+
+        .check-item {
+            margin: 10px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔧 Firebase Configuration Test</h1>
+        <p>This page checks if your Firebase project is correctly configured.</p>
+
+        <div id="results"></div>
+
+        <button onclick="runTests()">🔄 Run Tests Again</button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="renderer/firebase-config.js"></script>
+
+    <script>
+        function runTests() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="pending">🔍 Running configuration checks...</div>';
+
+            let html = '';
+            let allPassed = true;
+
+            // Test 1: Check if firebaseConfig exists
+            html += '<div class="check-item">';
+            html += '<strong>✓ Test 1:</strong> Firebase Config Loaded<br>';
+            if (typeof window.firebaseConfig !== 'undefined') {
+                html += '<span class="success" style="display:inline-block;padding:5px 10px;border-radius:4px;margin-top:5px;">✓ PASS</span>';
+            } else {
+                html += '<span class="error" style="display:inline-block;padding:5px 10px;border-radius:4px;margin-top:5px;">✗ FAIL - firebaseConfig not found</span>';
+                allPassed = false;
+            }
+            html += '</div>';
+
+            // Test 2: Check API Key
+            html += '<div class="check-item">';
+            html += '<strong>✓ Test 2:</strong> API Key Configuration<br>';
+            if (window.firebaseConfig && window.firebaseConfig.apiKey && !window.firebaseConfig.apiKey.includes('YOUR_')) {
+                html += '<span class="success" style="display:inline-block;padding:5px 10px;border-radius:4px;margin-top:5px;">✓ PASS - API Key is set</span>';
+            } else {
+                html += '<span class="error" style="display:inline-block;padding:5px 10px;border-radius:4px;margin-top:5px;">✗ FAIL - Please update YOUR_API_KEY_HERE with your actual Firebase API key</span>';
+                allPassed = false;
+            }
+            html += '</div>';
+
+            // Test 3: Check Project ID
+            html += '<div class="check-item">';
+            html += '<strong>✓ Test 3:</strong> Project ID<br>';
+            if (window.firebaseConfig && window.firebaseConfig.projectId === 'loanailmaedge') {
+                html += '<span class="success" style="display:inline-block;padding:5px 10px;border-radius:4px;margin-top:5px;">✓ PASS - Project ID: loanailmaedge</span>';
+            } else {
+                html += '<span class="error" style="display:inline-block;padding:5px 10px;border-radius:4px;margin-top:5px;">✗ FAIL - Invalid project ID</span>';
+                allPassed = false;
+            }
+            html += '</div>';
+
+            // Test 4: Firebase SDK loaded
+            html += '<div class="check-item">';
+            html += '<strong>✓ Test 4:</strong> Firebase SDK<br>';
+            if (typeof firebase !== 'undefined') {
+                html += '<span class="success" style="display:inline-block;padding:5px 10px;border-radius:4px;margin-top:5px;">✓ PASS - Firebase SDK loaded</span>';
+            } else {
+                html += '<span class="error" style="display:inline-block;padding:5px 10px;border-radius:4px;margin-top:5px;">✗ FAIL - Firebase SDK not loaded</span>';
+                allPassed = false;
+            }
+            html += '</div>';
+
+            // Test 5: Try to initialize Firebase
+            html += '<div class="check-item">';
+            html += '<strong>✓ Test 5:</strong> Firebase Initialization<br>';
+            try {
+                if (!firebase.apps.length && window.firebaseConfig) {
+                    firebase.initializeApp(window.firebaseConfig);
+                }
+                html += '<span class="success" style="display:inline-block;padding:5px 10px;border-radius:4px;margin-top:5px;">✓ PASS - Firebase initialized successfully</span>';
+            } catch (error) {
+                html += '<span class="error" style="display:inline-block;padding:5px 10px;border-radius:4px;margin-top:5px;">✗ FAIL - ' + error.message + '</span>';
+                allPassed = false;
+            }
+            html += '</div>';
+
+            // Show current config (redacting sensitive info)
+            html += '<div class="check-item">';
+            html += '<strong>📋 Current Configuration:</strong><br>';
+            if (window.firebaseConfig) {
+                const safeConfig = {
+                    ...window.firebaseConfig,
+                    apiKey: window.firebaseConfig.apiKey.includes('YOUR_') ? '⚠️ NOT SET' : '✓ Set (hidden)',
+                    appId: window.firebaseConfig.appId && !window.firebaseConfig.appId.includes('YOUR_') ? '✓ Set (hidden)' : '⚠️ NOT SET'
+                };
+                html += '<pre>' + JSON.stringify(safeConfig, null, 2) + '</pre>';
+            } else {
+                html += '<pre>No configuration found</pre>';
+            }
+            html += '</div>';
+
+            // Final result
+            if (allPassed) {
+                html = '<div class="success"><strong>✅ All tests passed!</strong><br>Your Firebase configuration is ready. You can now deploy with <code>firebase deploy</code></div>' + html;
+            } else {
+                html = '<div class="error"><strong>❌ Configuration incomplete</strong><br>Please fix the errors above before deploying.<br><br><strong>Next step:</strong> Update <code>public/renderer/firebase-config.js</code> with your Firebase credentials from the Firebase Console.</div>' + html;
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Run tests on page load
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+
+</html>

@@ -12,5 +12,10 @@ const firebaseConfig = {
     measurementId: "G-6ESX4HEMG9"
 };
 
-// Export for use in auth.js
+// Initialize Firebase (if not already initialized by Firebase Hosting)
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
+// Export for use in other scripts
 window.firebaseConfig = firebaseConfig;

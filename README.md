@@ -1,207 +1,65 @@
-# 🏦 LoanAI - AI-Powered Loan Approval Desktop App
+# LoanAI
 
-> **Built for LTM Hackathon 2026** - An intelligent, professional desktop application for instant loan evaluation using AI.
+LoanAI is an AI-powered desktop application built for the LTM Hackathon 2026. It provides instant loan evaluation by combining real data validation with intelligent assessment through Groq's language model. The application is designed to feel professional and approachable, giving users clear feedback on their loan applications while detecting potential fraud.
 
-![LoanAI](build/icon.png)
+## What It Does
 
-## ✨ Features
+The application guides users through a loan application process. As users fill out their personal, employment, and financial information, the system validates phone numbers, emails, and addresses in real time against external services. Once submitted, the backend enriches the data with validation results and sends it to an AI model for evaluation. The AI then returns a decision with detailed reasoning, a risk assessment, and suggested loan terms if approved.
 
-- 🤖 **AI-Powered Evaluation** - Leverages Groq's GPT model for intelligent loan assessment
-- 🔐 **Real Data Validation** - Validates phone numbers, emails, and addresses against external APIs
-- 🎨 **Clean, Professional UI** - Minimal blue theme with smooth animations
-- 🔧 **Developer Tools** - Built-in test data generator with authenticity slider
-- 📊 **Fraud Detection** - Advanced validation checks for data quality and fraud indicators
-- 🖥️ **Desktop Application** - Built with Electron for cross-platform support
-- 🚀 **Standalone Distribution** - No installation required, fully portable
+The evaluation model considers data quality, financial metrics like debt-to-income ratio and credit score, and overall risk classification. It follows a balanced decision framework that is firm but fair.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-### Frontend
-- **Electron** (v28.0.0) - Desktop application framework
-- **HTML5 + CSS3** - Structure and styling with custom properties
-- **Vanilla JavaScript** - All frontend logic
-- **Three.js** (r134) - 3D graphics for login screen
-- **GSAP** (v3.12.2) - Smooth animations
-- **Firebase** (v9.23.0) - Authentication
+The frontend is built with Electron for cross-platform desktop support, using plain HTML, CSS, and JavaScript. Three.js handles 3D graphics on the login screen, and GSAP provides smooth animations throughout. Firebase manages user authentication.
 
-### Backend
-- **Node.js + Express** - API server
-- **Groq API** - AI model (`openai/gpt-oss-120b`)
-- **Abstract API** - Email validation (optional)
-- **OpenStreetMap Nominatim** - Address verification
+The backend runs on Node.js with Express. It communicates with Groq's API for AI evaluation, Abstract API for email validation (optional), and OpenStreetMap Nominatim for address verification.
 
-### Design
-- **Color Scheme**: Professional Blue (#3b82f6)
-- **Typography**: Cormorant Garamond (headings), Inter (body)
-- **Minimal, clean aesthetic** - No flashy gradients or excessive animations
+The design uses a professional blue color scheme with Cormorant Garamond for headings and Inter for body text. The aesthetic is minimal and clean without flashy gradients or excessive animation.
 
-## 🚀 Getting Started
+## Getting Started
 
-### Prerequisites
-- Node.js 16+
-- npm or yarn
-- Groq API key (get it from [console.groq.com](https://console.groq.com/))
+You will need Node.js 16 or higher and a Groq API key, which you can get from console.groq.com.
 
-### Installation
+Clone the repository and navigate into the project folder. Run npm install to get the main dependencies, then change into the server directory and run npm install again for the backend dependencies.
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Kushan-Samant/LMA-edge-hackathon.git
-   cd LMA-edge-hackathon
-   ```
+Create a file called .env inside the server folder. Add your Groq API key, optionally your Abstract API key for email validation, and set the port to 3000.
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   cd server
-   npm install
-   cd ..
-   ```
+To run the application, you can start the backend server in one terminal with npm start from the server directory, then start the Electron frontend with npm start from the root directory. Alternatively, just running npm start from the root will auto-launch the backend server along with the Electron app.
 
-3. **Set up environment variables**
-   
-   Create `server/.env`:
-   ```env
-   GROQ_API_KEY=your_groq_api_key_here
-   EMAIL_VALIDATION_API_KEY=your_abstract_api_key_optional
-   PORT=3000
-   ```
+## Building for Distribution
 
-4. **Run the application**
-   
-   In one terminal (backend):
-   ```bash
-   cd server
-   npm start
-   ```
-   
-   In another terminal (frontend):
-   ```bash
-   npm start
-   ```
+For Windows, run npm run build:win or use electron-packager directly. Similar commands exist for macOS and Linux builds.
 
-   Or simply:
-   ```bash
-   npm start
-   ```
-   *(The Electron app will auto-start the backend server)*
+After building, you can share the entire output folder with users. Include the SETUP_README.txt and START_LOANAI.bat helper files. Recipients will need to create their own server/.env file with their API keys.
 
-## 📦 Building for Distribution
+## Developer Tools
 
-### Windows
-```bash
-npm run build:win
-```
-or
-```bash
-npx electron-packager . LoanAI --platform=win32 --arch=x64 --out=dist --overwrite
-```
+The application includes built-in testing utilities. An authenticity slider lets you generate test data ranging from completely authentic to obviously invalid. The auto-fill button quickly populates forms for testing purposes. A validation notice reminds developers that real contact information is required for proper validation.
 
-### macOS
-```bash
-npm run build:mac
-```
+## Project Structure
 
-### Linux
-```bash
-npm run build:linux
-```
+The main Electron process lives in main.js, which also handles auto-starting the backend. The index.html file contains the main application UI. Frontend JavaScript modules are organized in the renderer folder, including app.js for core logic, auth.js for Firebase authentication, loanService.js for API communication, and test-generator.js for generating test data.
 
-### Distribution Package
+The backend Express server lives in the server folder, with index.js containing API routes and validation logic, keepalive.js providing a self-ping mechanism, and .env.example serving as an environment template.
 
-After building, share the entire `dist/LoanAI-win32-x64/` folder with:
-- `SETUP_README.txt` - Setup instructions
-- `START_LOANAI.bat` - Helper startup script
-- **Important**: Recipients need to create their own `server/.env` file with their API keys!
+Styling is handled by main.css in the styles folder. The build folder contains the app icon.
 
-## 🎯 How It Works
+## Security and Privacy
 
-1. **User fills out loan application** with personal, employment, and financial information
-2. **Real-time validation** checks phone numbers, emails, and addresses
-3. **Data sent to backend** which enriches it with validation results
-4. **AI evaluation** using Groq's GPT model with a balanced, fair system prompt
-5. **Decision displayed** with detailed reasoning, risk assessment, and suggested terms
+API keys are stored in .env files which are excluded from version control. The backend handles all API calls so no keys are exposed in the frontend. Validation happens against real external services, and no data persists beyond the current session. Never commit .env files or share API keys publicly.
 
-### AI System Prompt Highlights
+## Known Limitations
 
-The AI evaluates applications based on:
-- **Data Quality & Fraud Detection** - Identifies placeholder/fake data
-- **Financial Assessment** - DTI ratio, credit score, savings buffer
-- **Risk Classification** - Low, Medium, or High risk categorization
-- **Fair Decision Framework** - Balanced approach, not overly strict
+Email validation requires an Abstract API key, which is optional but recommended for full functionality. Address validation uses the free OpenStreetMap Nominatim service, which has rate limits. Windows Defender may flag the first run since the application is unsigned. The backend server must be running for loan evaluation to work.
 
-## 🧪 Developer Tools
+## License
 
-The app includes built-in testing tools:
-- **Authenticity Slider**: Generate test data from "Authentic" to "Invalid"
-- **Auto-Fill Button**: Quickly populate forms with test data
-- **Validation Notice**: Reminds that real contact info is required
+This project is released under the MIT License.
 
-## 📁 Project Structure
+## Contributors
 
-```
-LMA-edge-hackathon/
-├── main.js                 # Electron main process (auto-starts backend)
-├── index.html             # Main application UI
-├── renderer/              # Frontend JavaScript modules
-│   ├── app.js             # Main app logic
-│   ├── auth.js            # Firebase authentication
-│   ├── loanService.js     # API communication
-│   ├── test-generator.js  # Test data generator
-│   └── ...
-├── server/                # Backend Express server
-│   ├── index.js           # API routes + validation
-│   ├── keepalive.js       # Self-ping mechanism
-│   └── .env.example       # Environment template
-├── styles/
-│   └── main.css           # Clean blue theme styling
-├── build/
-│   └── icon.png           # App icon
-└── package.json           # Dependencies and scripts
-```
+Built by Kushan Samant for LTM Hackathon 2026.
 
-## 🔐 Security & Privacy
+## Acknowledgments
 
-- ✅ API keys stored in `.env` (gitignored)
-- ✅ Backend handles all API calls (no exposed keys in frontend)
-- ✅ Real validation against external services
-- ✅ No data persistence beyond session
-- ⚠️ **Important**: Never commit `.env` files or share API keys!
-
-## 🎨 UI/UX Features
-
-- **Minimal Design**: Clean professional aesthetic
-- **Validation Warnings**: Clear notices about required real data
-- **Responsive Layout**: Works on different screen sizes
-- **Smooth Animations**: Subtle transitions without excessive effects
-- **Professional Color Scheme**: Blue accents (#3b82f6) instead of gradients
-
-## 🐛 Known Issues & Limitations
-
-- Email validation requires Abstract API key (optional but recommended)
-- Address validation uses free OpenStreetMap Nominatim (rate-limited)
-- Windows Defender may flag first run (normal for unsigned apps)
-- Backend must be running for loan evaluation to work
-
-## 📝 License
-
-MIT License - see LICENSE file for details
-
-## 👥 Contributors
-
-Built by **Kushan Samant** for LTM Hackathon 2026
-
-## 🙏 Acknowledgments
-
-- Groq for the amazing AI API
-- Electron team for the desktop framework
-- Firebase for authentication services
-- OpenStreetMap for address validation
-
----
-
-**⭐ Star this repo if you found it helpful!**
-
-**🐛 Issues?** Please open an issue on GitHub
-
-**💡 Contributions?** Pull requests welcome!
+Thanks to Groq for the AI API, the Electron team for the desktop framework, Firebase for authentication services, and OpenStreetMap for address validation.
